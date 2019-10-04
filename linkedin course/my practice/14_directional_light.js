@@ -10,7 +10,7 @@
 //for shadows- first need to tell renderer to start rendering shadows
 //then tell light to cast shadows
 //tell object to cast or receive shadows
-//go to getSpotLight()
+//go to getDirectionalLight()
 function init(){
     var scene = new THREE.Scene();
     //initializing dat.gui
@@ -29,11 +29,13 @@ function init(){
     //creating plane bye calling getPlane()
     var plane = getPlane(30);
     //creating light
-    var spotLight = getSpottLight(1);
+    var directionalLight = getDirectionalLight(1);
     //creating sphere
     var sphere = getSphere(0.05);
     //creating multiple boxes
     var boxGrid = getBoxGrid(10, 1.5);
+    //creating camera helper
+    var helper = new THREE.CameraHelper(directionalLight.shadow.camera);
 
     //can give name to objects so that we can call it from parent 
     plane.name = 'Plane-1';
@@ -44,26 +46,26 @@ function init(){
     //three.js works radiant. in radiant 90 degree = pi/2
     plane.rotation.x = Math.PI / 2 ;
     //change light position
-    spotLight.position.y = 4 ;
+    directionalLight.position.y = 4 ;
     //changing the intensity 
-    spotLight.intensity = 2;
+    directionalLight.intensity = 2;
 
     //creating a user interface controller for intensity using dat.gui
     //it takes 4 parameters- objects that we like to control, the property of the object that to be controlled
     //minimum value and maximum value for the property
-    gui.add(spotLight, 'intensity', 0, 10);
-    gui.add(spotLight.position, 'x', 0, 20);
-    gui.add(spotLight.position, 'y', 0, 20);
-    gui.add(spotLight.position, 'z', 0, 20);
-    gui.add(spotLight, 'penumbra', 0, 1);
+    gui.add(directionalLight, 'intensity', 0, 10);
+    gui.add(directionalLight.position, 'x', 0, 20);
+    gui.add(directionalLight.position, 'y', 0, 20);
+    gui.add(directionalLight.position, 'z', 0, 20);  
 
     
     //adding everything to scene to visualize
     //scene.add(box);    
     scene.add(plane);
-    spotLight.add(sphere);
-    scene.add(spotLight);
+    directionalLight.add(sphere);
+    scene.add(directionalLight);
     scene.add(boxGrid);
+    scene.add(helper);
 
     //three js camera needs some parameters to be set
     //field of view, aspect ratio, near clipping plane, far clipping plane
@@ -170,7 +172,7 @@ function getPointLight(intensity){
 }
 
 function getSpottLight(intensity){
-    //Spotlight takes arguments and others same as spotLight
+    //SpotLight takes arguments and others same as Spotlight
     //color of the light , intensity
     var light = new THREE.SpotLight(0xffffff, intensity);
     //telling light to cast shadow
@@ -183,6 +185,22 @@ function getSpottLight(intensity){
     //it may have some performance implication as updating to higher resolution may cost computation
     light.shadow.mapSize.width = 2048;
     light.shadow.mapSize.height = 2048;
+
+    return light;
+}
+
+function getDirectionalLight(intensity){
+    //same as pointLight
+    //color of the light , intensity
+    var light = new THREE.DirectionalLight(0xffffff, intensity);
+    //telling light to cast shadow
+    light.castShadow = true;
+    //setting attribute for the shadow camera more than the default values so that we can see all shadows
+    light.shadow.camera.left = -10;
+    light.shadow.camera.bottom = -10;
+    light.shadow.camera.right = 10;
+    light.shadow.camera.tio = 10;
+
 
     return light;
 }
