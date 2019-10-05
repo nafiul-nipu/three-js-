@@ -1,7 +1,17 @@
+// One way of getting a continuous value in Three.js will be to 
+// use the Three.js clock object. Clock object tracks the time 
+// in the Three.js application. We can call the getElapsedTime 
+// method on this object to be able to get the elapsed time 
+// since the start of the application to feed it into a sine or 
+// a cosine function
+//noise library is perlin.js - needs to add for noise
+//chceck update()
+
 function init() {
 	var scene = new THREE.Scene();
-	var gui = new dat.GUI();
-	var clock = new THREE.Clock();
+    var gui = new dat.GUI();
+    //creating the clock
+    var clock = new THREE.Clock();
 
 	var enableFog = false;
 
@@ -9,13 +19,14 @@ function init() {
 		scene.fog = new THREE.FogExp2(0xffffff, 0.2);
 	}
 	
-	var plane = getPlane(100);
+	var plane = getPlane(30);
 	var directionalLight = getDirectionalLight(1);
 	var sphere = getSphere(0.05);
-	var boxGrid = getBoxGrid(20, 2.5);
+    var boxGrid = getBoxGrid(10, 1.5);
+    //giving name of box grid
+    boxGrid.name = 'boxGrid';
 
 	plane.name = 'plane-1';
-	boxGrid.name = 'boxGrid';
 
 	plane.rotation.x = Math.PI/2;
 	directionalLight.position.x = 13;
@@ -28,6 +39,11 @@ function init() {
 	scene.add(directionalLight);
 	scene.add(boxGrid);
 
+	gui.add(directionalLight, 'intensity', 0, 10);
+	gui.add(directionalLight.position, 'x', 0, 20);
+	gui.add(directionalLight.position, 'y', 0, 20);
+	gui.add(directionalLight.position, 'z', 0, 20);
+
 	var camera = new THREE.PerspectiveCamera(
 		45,
 		window.innerWidth/window.innerHeight,
@@ -35,33 +51,11 @@ function init() {
 		1000
 	);
 
-	var cameraZRotation = new THREE.Group();
-	var cameraYPosition = new THREE.Group();
-	var cameraZPosition = new THREE.Group();
-	var cameraXRotation = new THREE.Group();
-	var cameraYRotation = new THREE.Group();
+	camera.position.x = 10;
+	camera.position.y = 18;
+	camera.position.z = -18;
 
-	cameraZRotation.name = 'cameraZRotation';
-	cameraYPosition.name = 'cameraYPosition';
-	cameraZPosition.name = 'cameraZPosition';
-	cameraXRotation.name = 'cameraXRotation';
-	cameraYRotation.name = 'cameraYRotation';
-
-	cameraZRotation.add(camera);
-	cameraYPosition.add(cameraZRotation);
-	cameraZPosition.add(cameraYPosition);
-	cameraXRotation.add(cameraZPosition);
-	cameraYRotation.add(cameraXRotation);
-	scene.add(cameraYRotation);
-
-	cameraXRotation.rotation.x = -Math.PI/2;
-	cameraYPosition.position.y = 1;
-	cameraZPosition.position.z = 100;
-
-	gui.add(cameraZPosition.position, 'z', 0, 100);
-	gui.add(cameraYRotation.rotation, 'y', -Math.PI, Math.PI);
-	gui.add(cameraXRotation.rotation, 'x', -Math.PI, Math.PI);
-	gui.add(cameraZRotation.rotation, 'z', -Math.PI, Math.PI);
+	camera.lookAt(new THREE.Vector3(0, 0, 0));
 
 	var renderer = new THREE.WebGLRenderer();
 	renderer.shadowMap.enabled = true;
@@ -94,12 +88,12 @@ function getBoxGrid(amount, separationMultiplier) {
 	var group = new THREE.Group();
 
 	for (var i=0; i<amount; i++) {
-		var obj = getBox(1, 3, 1);
+		var obj = getBox(1, 1, 1);
 		obj.position.x = i * separationMultiplier;
 		obj.position.y = obj.geometry.parameters.height/2;
 		group.add(obj);
 		for (var j=1; j<amount; j++) {
-			var obj = getBox(1, 3, 1);
+			var obj = getBox(1, 1, 1);
 			obj.position.x = i * separationMultiplier;
 			obj.position.y = obj.geometry.parameters.height/2;
 			obj.position.z = j * separationMultiplier;
@@ -163,13 +157,10 @@ function getDirectionalLight(intensity) {
 	var light = new THREE.DirectionalLight(0xffffff, intensity);
 	light.castShadow = true;
 
-	light.shadow.camera.left = -40;
-	light.shadow.camera.bottom = -40;
-	light.shadow.camera.right = 40;
-	light.shadow.camera.top = 40;
-
-	light.shadow.mapSize.width = 4096;
-	light.shadow.mapSize.height = 4096;
+	light.shadow.camera.left = -10;
+	light.shadow.camera.bottom = -10;
+	light.shadow.camera.right = 10;
+	light.shadow.camera.top = 10;
 
 	return light;
 }
@@ -178,29 +169,29 @@ function update(renderer, scene, camera, controls, clock) {
 	renderer.render(
 		scene,
 		camera
-	);
+    );
+    //for animation sine function
+    //get the elapsed time
+    var timeElapsed = clock.getElapsedTime();    
+    //animation
+    var boxGrid = scene.getObjectByName('boxGrid');
+    boxGrid.children.forEach(function(child, index) {
+        //normal animation from -1 to 1
+        //child.scale.y = Math.sin(timeElapsed);
+        //animation from 0 to 1
+        //child.scale.y = (Math.sin(timeElapsed) + 1) / 2;
+        //animation from > 0 to 1
+        //child.scale.y = (Math.sin(timeElapsed) + 1) / 2 + 0.001; 
+        //making animation faster 
+        //child.scale.y = (Math.sin(timeElapsed * 5) + 1) / 2 + 0.001;
+        //making various boxes using noise
+        //simplex2 function takes two parameters
+        var para = timeElapsed * 5 + index ;
+        child.scale.y = (noise.simplex2(para, para) + 1) / 2 + 0.001;
+        child.position.y = child.scale.y / 2;
+    });
 
 	controls.update();
-
-	var timeElapsed = clock.getElapsedTime();
-
-	var cameraXRotation = scene.getObjectByName('cameraXRotation');
-	if (cameraXRotation.rotation.x < 0) {
-		cameraXRotation.rotation.x += 0.01;
-	}
-
-	var cameraZPosition = scene.getObjectByName('cameraZPosition');
-	cameraZPosition.position.z -= 0.25;
-
-	var cameraZRotation = scene.getObjectByName('cameraZRotation');
-	cameraZRotation.rotation.z = noise.simplex2(timeElapsed * 1.5, timeElapsed * 1.5) * 0.02;
-
-	var boxGrid = scene.getObjectByName('boxGrid');
-	boxGrid.children.forEach(function(child, index) {
-		var x = timeElapsed + index;
-		child.scale.y = (noise.simplex2(x, x) + 1) / 2 + 0.001;
-		child.position.y = child.scale.y/2;
-	});
 
 	requestAnimationFrame(function() {
 		update(renderer, scene, camera, controls, clock);

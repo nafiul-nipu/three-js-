@@ -1,3 +1,11 @@
+/*
+for any non trivial object we need animation rig
+- consists of helper obejcts to facilitate the animation process
+-camera.postion.x/y/z is rermoved and it will controlled by the animation rig
+-gui.add of directional light is removed too
+- rig actually used for controlling the camera
+-create controller for camera and then add gui
+*/
 function init() {
 	var scene = new THREE.Scene();
 	var gui = new dat.GUI();
@@ -9,10 +17,10 @@ function init() {
 		scene.fog = new THREE.FogExp2(0xffffff, 0.2);
 	}
 	
-	var plane = getPlane(100);
+	var plane = getPlane(30);
 	var directionalLight = getDirectionalLight(1);
 	var sphere = getSphere(0.05);
-	var boxGrid = getBoxGrid(20, 2.5);
+	var boxGrid = getBoxGrid(10, 1.5);
 
 	plane.name = 'plane-1';
 	boxGrid.name = 'boxGrid';
@@ -28,40 +36,38 @@ function init() {
 	scene.add(directionalLight);
 	scene.add(boxGrid);
 
+	
 	var camera = new THREE.PerspectiveCamera(
 		45,
 		window.innerWidth/window.innerHeight,
 		1,
 		1000
 	);
+    
+    // //first create a 3D group
+    // var cameraZPosition = new THREE.Group();
+    // //then add camera to the new group
+    // cameraZPosition.add(camera);
+    // //add it to the scene
+    // scene.add(cameraZPosition);
+    // //now create a gui for this controller
+    // gui.add(cameraZPosition.position, 'z', 0, 100);
 
-	var cameraZRotation = new THREE.Group();
-	var cameraYPosition = new THREE.Group();
-	var cameraZPosition = new THREE.Group();
-	var cameraXRotation = new THREE.Group();
-	var cameraYRotation = new THREE.Group();
+    //creating all axises
+    var cameraZPosition = new THREE.Group();
+    var cameraxRotation = new THREE.Group();
+    var cameraYRotation = new THREE.Group();
+    
+    cameraZPosition.add(camera);
+    cameraxRotation.add(cameraZPosition);
+    cameraYRotation.add(cameraxRotation);   
+    scene.add(cameraYRotation);
+    
+    gui.add(cameraZPosition.position, 'z', 0, 100);
+    gui.add(cameraYRotation.rotation, 'y', -Math.PI, Math.PI);
+    gui.add(cameraxRotation.rotation, 'x', -Math.PI, Math.PI);
 
-	cameraZRotation.name = 'cameraZRotation';
-	cameraYPosition.name = 'cameraYPosition';
-	cameraZPosition.name = 'cameraZPosition';
-	cameraXRotation.name = 'cameraXRotation';
-	cameraYRotation.name = 'cameraYRotation';
-
-	cameraZRotation.add(camera);
-	cameraYPosition.add(cameraZRotation);
-	cameraZPosition.add(cameraYPosition);
-	cameraXRotation.add(cameraZPosition);
-	cameraYRotation.add(cameraXRotation);
-	scene.add(cameraYRotation);
-
-	cameraXRotation.rotation.x = -Math.PI/2;
-	cameraYPosition.position.y = 1;
-	cameraZPosition.position.z = 100;
-
-	gui.add(cameraZPosition.position, 'z', 0, 100);
-	gui.add(cameraYRotation.rotation, 'y', -Math.PI, Math.PI);
-	gui.add(cameraXRotation.rotation, 'x', -Math.PI, Math.PI);
-	gui.add(cameraZRotation.rotation, 'z', -Math.PI, Math.PI);
+	camera.lookAt(new THREE.Vector3(0, 0, 0));
 
 	var renderer = new THREE.WebGLRenderer();
 	renderer.shadowMap.enabled = true;
@@ -94,12 +100,12 @@ function getBoxGrid(amount, separationMultiplier) {
 	var group = new THREE.Group();
 
 	for (var i=0; i<amount; i++) {
-		var obj = getBox(1, 3, 1);
+		var obj = getBox(1, 1, 1);
 		obj.position.x = i * separationMultiplier;
 		obj.position.y = obj.geometry.parameters.height/2;
 		group.add(obj);
 		for (var j=1; j<amount; j++) {
-			var obj = getBox(1, 3, 1);
+			var obj = getBox(1, 1, 1);
 			obj.position.x = i * separationMultiplier;
 			obj.position.y = obj.geometry.parameters.height/2;
 			obj.position.z = j * separationMultiplier;
@@ -163,13 +169,10 @@ function getDirectionalLight(intensity) {
 	var light = new THREE.DirectionalLight(0xffffff, intensity);
 	light.castShadow = true;
 
-	light.shadow.camera.left = -40;
-	light.shadow.camera.bottom = -40;
-	light.shadow.camera.right = 40;
-	light.shadow.camera.top = 40;
-
-	light.shadow.mapSize.width = 4096;
-	light.shadow.mapSize.height = 4096;
+	light.shadow.camera.left = -10;
+	light.shadow.camera.bottom = -10;
+	light.shadow.camera.right = 10;
+	light.shadow.camera.top = 10;
 
 	return light;
 }
@@ -184,20 +187,9 @@ function update(renderer, scene, camera, controls, clock) {
 
 	var timeElapsed = clock.getElapsedTime();
 
-	var cameraXRotation = scene.getObjectByName('cameraXRotation');
-	if (cameraXRotation.rotation.x < 0) {
-		cameraXRotation.rotation.x += 0.01;
-	}
-
-	var cameraZPosition = scene.getObjectByName('cameraZPosition');
-	cameraZPosition.position.z -= 0.25;
-
-	var cameraZRotation = scene.getObjectByName('cameraZRotation');
-	cameraZRotation.rotation.z = noise.simplex2(timeElapsed * 1.5, timeElapsed * 1.5) * 0.02;
-
 	var boxGrid = scene.getObjectByName('boxGrid');
 	boxGrid.children.forEach(function(child, index) {
-		var x = timeElapsed + index;
+		var x = timeElapsed * 5 + index;
 		child.scale.y = (noise.simplex2(x, x) + 1) / 2 + 0.001;
 		child.position.y = child.scale.y/2;
 	});
