@@ -1,48 +1,17 @@
 /*
-using new scene
-materials the apperance of the object
-this will be for all material examples
-1. MeshBasicMaterial - The material is not affected by lighting at all,
-so it always displays the given color, no matter what your scene lighting is.
-2. MeshLambertMaterial - can be a suitable material to simulate nice, shiny surfaces, such as rubber, clay, or stone.
-It uses a very simplistic shading model, which makes it very (speaks softly) but it might not yield the most accurate results.
-3. MeshPhongMaterial - using a mesh Phong material can be a better choice, since it allows you to control the highlights on the material as well
-Mesh Phong material has an attribute called "shininess," that describes how sharp the light reflections are on the material. 
-Higher the value, sharper the reflections will be. Lower values can be good to simulate rough surfaces, 
-whereas higher values would be better for simulating glossier surfaces, like metal.
-4. MeshStandardMaterial -  is a physically based rendering material that can create much more realistic results compared to other materials 
-This is the kind of material that modern game engines like Unreal or Unity use, and is an industry standard in gaming and visual effects.
+Texture maps are 2D images that can be mapped on a material for the purpose of providing surface detail
 
-*/
+ */
 function init() {
 	var scene = new THREE.Scene();
 	var gui = new dat.GUI();
 
-	// initialize objects 
-	// //- for mesh Basic material
-	// var sphereMaterial = getMaterial('basic', 'rgb(255, 0, 0)');
-	// var sphere = getSphere(sphereMaterial, 1, 24);
-	// var planeMaterial = getMaterial('basic', 'rgb(0, 0, 255)');
-	// var plane = getPlane(planeMaterial, 30);
-
-	// //- for mesh lambert material
-	// var sphereMaterial = getMaterial('lambert', 'rgb(255, 255, 255)');
-	// var sphere = getSphere(sphereMaterial, 1, 24);
-	// var planeMaterial = getMaterial('lambert', 'rgb(255, 255, 255)');
-	// var plane = getPlane(planeMaterial, 30);
-
-	// //- for mesh phong material
-	// var sphereMaterial = getMaterial('phong', 'rgb(255, 255, 255)');
-	// var sphere = getSphere(sphereMaterial, 1, 24);
-	// var planeMaterial = getMaterial('phong', 'rgb(255, 255, 255');
-	// var plane = getPlane(planeMaterial, 30);
-
-	//- for mesh standard material
+	// initialize objects
 	var sphereMaterial = getMaterial('standard', 'rgb(255, 255, 255)');
 	var sphere = getSphere(sphereMaterial, 1, 24);
+
 	var planeMaterial = getMaterial('standard', 'rgb(255, 255, 255)');
 	var plane = getPlane(planeMaterial, 30);
-
 
 	var lightLeft = getSpotLight(1, 'rgb(255, 220, 180)');
 	var lightRight = getSpotLight(1, 'rgb(255, 220, 180)');
@@ -60,6 +29,18 @@ function init() {
 	lightRight.position.z = -4;
 
 	// manipulate materials
+	var loader = new THREE.TextureLoader();
+	planeMaterial.map = loader.load('/assets/textures/concrete.jpg');
+	planeMaterial.bumpMap = loader.load('/assets/textures/concrete.jpg');
+	planeMaterial.bumpScale = 0.01;
+
+	var maps = ['map', 'bumpMap'];
+	maps.forEach(function(mapName) {
+		var texture = planeMaterial[mapName];
+		texture.wrapS = THREE.RepeatWrapping;
+		texture.wrapT = THREE.RepeatWrapping;
+		texture.repeat.set(1.5, 1.5);
+	});
 
 	// dat.gui
 	var folder1 = gui.addFolder('light_1');
@@ -74,24 +55,12 @@ function init() {
 	folder2.add(lightRight.position, 'y', -5, 15);
 	folder2.add(lightRight.position, 'z', -5, 15);
 
-	// //shininess controller -phong material
-	// var folder3 = gui.addFolder('light_3');
-	// folder3.add(sphereMaterial, 'shininess', 0, 1000);
-	// folder3.add(planeMaterial, 'shininess', 0, 1000);
-	// folder3.open()
-
-	//standard material - controller does not have shininess controller
-	//it takes roughness and roughness takes value between 0 and 1
-	//lower value - sharper .. higher value - rougher
-	//another parameter called metalness - 
-	//it controls lighting and reflection distribution and controls how metallic an object looks
-	var folder3 = gui.addFolder('light_3');
+	var folder3 = gui.addFolder('materials');
 	folder3.add(sphereMaterial, 'roughness', 0, 1);
 	folder3.add(planeMaterial, 'roughness', 0, 1);
 	folder3.add(sphereMaterial, 'metalness', 0, 1);
 	folder3.add(planeMaterial, 'metalness', 0, 1);
-	folder3.open()
-
+	folder3.open();
 
 	// add objects to the scene
 	scene.add(sphere);
